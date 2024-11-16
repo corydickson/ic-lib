@@ -30,7 +30,7 @@ contract InvokeCheckTest is Test {
     function test_has4ByteSelectorTrue() public {
         bytes4 selector = bytes4(keccak256("transfer(address,address,uint256)"));
         bytes memory data = createCalldata();
-        InvokeCheck.has_selector(data, selector);
+        InvokeCheck.hasSelector(data, selector);
     }
 
     //forge-config: default.fuzz.runs = 1024
@@ -40,7 +40,7 @@ contract InvokeCheckTest is Test {
         bytes memory data = createCalldata();
 
         vm.expectRevert();
-        InvokeCheck.has_selector(data, selector);
+        InvokeCheck.hasSelector(data, selector);
     }
 
 }
