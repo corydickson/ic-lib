@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import {Test, console} from "forge-std/Test.sol";
+
 library InvokeCheck {
     enum Comparators {
         EMPTY, // Do nothing
@@ -52,6 +54,18 @@ library InvokeCheck {
         }
     }
 
+    function checkAddress(bytes memory addrCall, bytes memory addr) internal pure {
+        assembly {
+            addrCall := mload(add(addrCall, 20))
+            addr := mload(add(addr, 20))
+            let valid := iszero(xor(addrCall, addr))
+
+            switch valid
+            case 1 { return(0, returndatasize()) }
+            case 0 { revert(0, 0) }
+        }
+    }
+
     function checkUint(bytes memory paramData, bytes memory param, Comparators comp) internal pure {
         bytes memory v;
         assembly {
@@ -94,9 +108,13 @@ library InvokeCheck {
             checkUint(paramData, limit.value, comp);
         }
 
+        if (limit.paramType == Types.ADDRESS) {
+            require(comp == Comparators.EQUAL);
+            checkAddress(paramData, limit.value);
+        }
+
         /*
                || params[i].paramType == Types.INTM
-               || params[i].paramType == Types.ADDRESS
                || params[i].paramType == Types.BOOL
                || params[i].paramType == Types.FIXEDMXN
                || params[i].paramType == Types.UFIXEDMXN
