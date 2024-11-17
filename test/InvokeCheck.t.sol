@@ -23,8 +23,26 @@ contract InvokeCheckTest is Test {
     function createCalldata() public returns (bytes memory) {
         address _from = makeAddr("from");
         address _to = makeAddr("to");
-        bytes memory data = abi.encodeWithSignature("transfer(address,address,uint256)", _from, _to, uint256(10));
+        bytes memory data = abi.encodeWithSignature("transfer(address,address,uint256)", _from, _to, uint256(300));
         return data;
+    }
+
+    function createCondition() public returns (InvokeCheck.Condition memory) {
+        bytes4 selector = bytes4(keccak256("transfer(address,address,uint256)"));
+        address _from = makeAddr("from");
+        address _to = makeAddr("to");
+
+        InvokeCheck.Parameter[] memory params = new InvokeCheck.Parameter[](3);
+        params[0] = InvokeCheck.Parameter(abi.encode(uint256(uint160(_from))), InvokeCheck.Types.ADDRESS);
+        params[1] = InvokeCheck.Parameter(abi.encode(uint256(uint160(_to))), InvokeCheck.Types.ADDRESS);
+        params[2] = InvokeCheck.Parameter(abi.encode(uint256(200)), InvokeCheck.Types.UINTM);
+
+        InvokeCheck.Comparators[] memory comps = new InvokeCheck.Comparators[](3);
+        comps[0] = InvokeCheck.Comparators(1); // EQ
+        comps[1] = InvokeCheck.Comparators(1); // EQ
+        comps[2] = InvokeCheck.Comparators(3); // GREATER_THAN
+
+        return InvokeCheck.Condition(selector, params, comps);
     }
 
     function test_has4ByteSelectorTrue() public {
@@ -43,4 +61,9 @@ contract InvokeCheckTest is Test {
         InvokeCheck.hasSelector(data, selector);
     }
 
+    function test_satisfiesCondition() public {
+        InvokeCheck.Condition memory cond = createCondition();
+        bytes memory data = createCalldata();
+        InvokeCheck.satisfiesCondition(data, cond);
+    }
 }
